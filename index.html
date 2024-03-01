@@ -127,19 +127,16 @@ function getHWID() {
 }
 
 function checkRedirect() {
-  // Check if the user has been redirected from the specified URLs
-  var urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('from') === 'linkvertise' || urlParams.get('from') === 'lootlink') {
-    return true;
-  } else {
-    return false;
-  }
+  // Check if the user has been redirected from the specified URL
+  var redirectedURL = "https://tinyurl.com/3njad6s8";
+  var currentURL = window.location.href;
+  return currentURL.includes(redirectedURL);
 }
 
 document.addEventListener("DOMContentLoaded", function() {
   var blockingOverlay = document.getElementById('blockingOverlay');
   if (!checkRedirect()) {
-    // If user hasn't been redirected from the specified URLs, show blocking interface
+    // If user hasn't been redirected from the specified URL, show blocking interface
     blockingOverlay.style.display = 'flex';
   } else {
     // If user has been redirected, start the timer to generate key
