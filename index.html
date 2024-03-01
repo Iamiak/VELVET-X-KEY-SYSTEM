@@ -80,18 +80,14 @@ function startTimer(duration, display) {
       clearInterval(countdown);
       var key = '';
       var hwid = getHWID();
-      var ip = getIP();
-      var storedKey = localStorage.getItem('key_' + hwid) || localStorage.getItem('key_' + ip);
-      if (storedKey) {
-        key = storedKey;
+      var lastGenerated = localStorage.getItem('lastGenerated_' + hwid);
+      if (lastGenerated && (Date.now() - parseInt(lastGenerated)) < 60000) {
+        // If a key was generated less than 1 minute ago, use the previously generated key
+        key = localStorage.getItem('key_' + hwid);
       } else {
         key = generateKey();
         localStorage.setItem('key_' + hwid, key);
-        localStorage.setItem('key_' + ip, key);
-        setTimeout(function() {
-          localStorage.removeItem('key_' + hwid);
-          localStorage.removeItem('key_' + ip);
-        }, 24 * 60 * 60 * 1000); // Remove the key after 24 hours
+        localStorage.setItem('lastGenerated_' + hwid, Date.now());
       }
       document.getElementById('key').textContent = key;
       document.getElementById('copyBtn').style.display = 'inline-block';
@@ -100,16 +96,8 @@ function startTimer(duration, display) {
 }
 
 function getHWID() {
-  // For demonstration purposes, generating a random HWID
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
-function getIP() {
-  // For demonstration purposes, generating a random IP
-  return Math.floor(Math.random() * 256) + '.' +
-         Math.floor(Math.random() * 256) + '.' +
-         Math.floor(Math.random() * 256) + '.' +
-         Math.floor(Math.random() * 256);
+  // For demonstration purposes, generating a fixed HWID
+  return 'myHWID';
 }
 
 document.addEventListener("DOMContentLoaded", function() {
