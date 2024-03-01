@@ -88,14 +88,21 @@ h1 {
 
 <script>
 function generateKey() {
-  // Generate a random string (for demonstration purposes, generating a random string of length 10)
-  var key = '';
-  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  var charactersLength = characters.length;
-  for (var i = 0; i < 10; i++) {
-    key += characters.charAt(Math.floor(Math.random() * charactersLength));
+  var hwid = getHWID();
+  var storedKey = localStorage.getItem('key_' + hwid);
+  if (storedKey) {
+    return storedKey; // If a key has been generated for this HWID before, return the same key
+  } else {
+    // Generate a random string (for demonstration purposes, generating a random string of length 10)
+    var key = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < 10; i++) {
+      key += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    localStorage.setItem('key_' + hwid, key);
+    return key;
   }
-  return key;
 }
 
 function startTimer(duration, display) {
@@ -104,18 +111,7 @@ function startTimer(duration, display) {
     display.textContent = timer;
     if (--timer < 0) {
       clearInterval(countdown);
-      var key = '';
-      var hwid = getHWID();
-      var lastVisitedURL = localStorage.getItem('lastVisitedURL');
-      var lastGenerated = localStorage.getItem('lastGenerated_' + hwid);
-      if (lastVisitedURL === 'https://tinyurl.com/3njad6s8' && lastGenerated && (Date.now() - parseInt(lastGenerated)) < 86400000) {
-        // If last visited URL is the specified one and a key was generated less than 24 hours ago, use the previously generated key
-        key = localStorage.getItem('key_' + hwid);
-      } else {
-        key = generateKey();
-        localStorage.setItem('key_' + hwid, key);
-        localStorage.setItem('lastGenerated_' + hwid, Date.now());
-      }
+      var key = generateKey();
       document.getElementById('key').textContent = key;
       document.getElementById('copyBtn').style.display = 'inline-block';
     }
