@@ -90,17 +90,25 @@ h1 {
 function generateKey() {
   var hwid = getHWID();
   var storedKey = localStorage.getItem('key_' + hwid);
-  if (storedKey) {
-    return storedKey; // If a key has been generated for this HWID before, return the same key
+  var storedTimestamp = localStorage.getItem('timestamp_' + hwid);
+  var currentTimestamp = Date.now();
+  
+  // Check if a key exists for this HWID and if it was generated within the last 24 hours
+  if (storedKey && storedTimestamp && (currentTimestamp - parseInt(storedTimestamp)) < 24 * 60 * 60 * 1000) {
+    return storedKey; // If yes, return the stored key
   } else {
-    // Generate a random string (for demonstration purposes, generating a random string of length 10)
+    // Generate a new key
     var key = '';
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     var charactersLength = characters.length;
     for (var i = 0; i < 10; i++) {
       key += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
+    
+    // Store the new key and its timestamp
     localStorage.setItem('key_' + hwid, key);
+    localStorage.setItem('timestamp_' + hwid, currentTimestamp);
+    
     return key;
   }
 }
