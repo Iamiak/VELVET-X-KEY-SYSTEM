@@ -15,7 +15,7 @@ body {
 }
 
 .container {
-  max-width: 600px;
+  max-width: 400px;
   margin: 100px auto;
   background-color: #222222;
   padding: 20px;
@@ -25,16 +25,16 @@ body {
 
 h1 {
   color: #ffffff;
+  font-size: 24px;
+  margin-bottom: 20px;
 }
 
 #whitelistStatus {
-  font-size: 20px;
-  margin-bottom: 20px;
+  font-size: 18px;
 }
 
-#key {
-  font-size: 24px;
-  margin-bottom: 20px;
+#countdownWrapper {
+  font-size: 16px;
 }
 
 #copyBtn {
@@ -44,55 +44,40 @@ h1 {
   border: none;
   cursor: pointer;
   border-radius: 5px;
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
 #copyBtn:hover {
   background-color: #0056b3;
 }
 
-#blockingOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.blockingMessage {
-  background-color: #333333;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>Whitelist System</h1>
-  <div id="whitelistStatus"></div>
+  <div id="whitelistStatus">
+    <div id="countdownWrapper"></div>
+  </div>
 </div>
 
 <script>
-var weinzWhitelisted = []; // Initialize an empty whitelist
 var whitelistDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+var hwid = getHWID();
 
-function isWeinzWhitelisted(hwid) {
+function isWhitelisted(hwid) {
   var storedData = JSON.parse(localStorage.getItem('whitelist_' + hwid));
   return storedData && (Date.now() - storedData.timestamp) < whitelistDuration;
 }
 
-function addToWhitelist(hwid) {
+function addToWhitelist(hwid, ip) {
   var storedData = JSON.parse(localStorage.getItem('whitelist_' + hwid));
   var isNewWhitelisted = false;
   if (!storedData || (Date.now() - storedData.timestamp) >= whitelistDuration) {
-    storedData = { timestamp: Date.now() };
+    storedData = { timestamp: Date.now(), ip: ip };
     localStorage.setItem('whitelist_' + hwid, JSON.stringify(storedData));
+    // Store IP in a separate document
+    localStorage.setItem('ip_' + hwid, ip);
     isNewWhitelisted = true;
   }
   return isNewWhitelisted;
@@ -104,36 +89,45 @@ function getHWID() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  var whitelistStatus = document.getElementById('whitelistStatus');
-  var hwid = getHWID();
+  var countdownWrapper = document.getElementById('countdownWrapper');
+  showWhitelistingCountdown();
 
-  if (isWeinzWhitelisted(hwid)) {
-    updateRemainingTime();
-  } else {
-    setTimeout(function() {
-      if (addToWhitelist(hwid)) {
-        updateRemainingTime();
-      }
-    }, 5000); // Wait 5 seconds before whitelisting
-  }
-
-  // Update remaining time every second
-  setInterval(function() {
-    if (isWeinzWhitelisted(hwid)) {
-      updateRemainingTime();
+  setTimeout(function() {
+    var ip = "127.0.0.1"; // Example IP, replace with actual IP detection logic
+    if (!isWhitelisted(hwid)) {
+      addToWhitelist(hwid, ip);
     }
-  }, 1000);
+    startCountdown();
+  }, 5000); // Wait 5 seconds before starting the countdown
 });
 
-function updateRemainingTime() {
-  var hwid = getHWID();
-  var whitelistStatus = document.getElementById('whitelistStatus');
-  var storedData = JSON.parse(localStorage.getItem('whitelist_' + hwid));
-  var remainingTime = whitelistDuration - (Date.now() - storedData.timestamp);
-  var hours = Math.floor(remainingTime / (1000 * 60 * 60));
-  var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-  var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-  whitelistStatus.textContent = "You are whitelisted for: " + hours + " hours, " + minutes + " minutes, " + seconds + " seconds";
+function showWhitelistingCountdown() {
+  var timer = 5;
+  var countdown = setInterval(function() {
+    if (timer <= 0) {
+      clearInterval(countdown);
+      startCountdown();
+    } else {
+      countdownWrapper.textContent = "Whitelisting in " + timer + " seconds...";
+      timer--;
+    }
+  }, 1000);
+}
+
+function startCountdown() {
+  var remainingTime = whitelistDuration - (Date.now() - JSON.parse(localStorage.getItem('whitelist_' + hwid)).timestamp);
+  var countdown = setTimeout(function update() {
+    if (remainingTime <= 0) {
+      countdownWrapper.textContent = "Your whitelist has expired.";
+    } else {
+      var hours = Math.floor(remainingTime / (1000 * 60 * 60));
+      var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+      var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+      countdownWrapper.textContent = "Remaining time: " + hours + " hours, " + minutes + " minutes, " + seconds + " seconds";
+      remainingTime -= 1000;
+      setTimeout(update, 1000); // Update the countdown every second
+    }
+  }, 1000);
 }
 </script>
 </body>
