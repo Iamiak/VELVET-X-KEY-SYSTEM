@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Whitelist System</title>
+<title>Key Generator</title>
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -15,7 +15,7 @@ body {
 }
 
 .container {
-  max-width: 400px;
+  max-width: 600px;
   margin: 100px auto;
   background-color: #222222;
   padding: 20px;
@@ -25,16 +25,21 @@ body {
 
 h1 {
   color: #ffffff;
-  font-size: 24px;
+}
+
+#keyStatus {
+  font-size: 20px;
   margin-bottom: 20px;
 }
 
-#whitelistStatus {
-  font-size: 18px;
+#countdownWrapper {
+  font-size: 20px;
+  margin-bottom: 20px;
 }
 
-#countdownWrapper {
-  font-size: 16px;
+#key {
+  font-size: 24px;
+  margin-bottom: 20px;
 }
 
 #copyBtn {
@@ -44,91 +49,106 @@ h1 {
   border: none;
   cursor: pointer;
   border-radius: 5px;
-  margin-top: 20px;
 }
 
 #copyBtn:hover {
   background-color: #0056b3;
 }
-
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Whitelist System</h1>
-  <div id="whitelistStatus">
+  <h1>Key Generator</h1>
+  <div id="keyStatus">
     <div id="countdownWrapper"></div>
+    <div id="key"></div>
+    <button id="copyBtn" style="display: none;">Copy Key</button>
   </div>
 </div>
 
 <script>
-var whitelistDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-var hwid = getHWID();
-
-function isWhitelisted(hwid) {
-  var storedData = JSON.parse(localStorage.getItem('whitelist_' + hwid));
-  return storedData && (Date.now() - storedData.timestamp) < whitelistDuration;
-}
-
-function addToWhitelist(hwid, ip) {
-  var storedData = JSON.parse(localStorage.getItem('whitelist_' + hwid));
-  var isNewWhitelisted = false;
-  if (!storedData || (Date.now() - storedData.timestamp) >= whitelistDuration) {
-    storedData = { timestamp: Date.now(), ip: ip };
-    localStorage.setItem('whitelist_' + hwid, JSON.stringify(storedData));
-    // Store IP in a separate document
-    localStorage.setItem('ip_' + hwid, ip);
-    isNewWhitelisted = true;
-  }
-  return isNewWhitelisted;
-}
-
 function getHWID() {
   // For demonstration purposes, generating a fixed HWID
   return 'myHWID';
 }
 
-document.addEventListener("DOMContentLoaded", function() {
+function rotateKey() {
+  var validKeys = ["JTt3i77", "8y3hq7sy3y", "Uet3g6s6", "jsu2uhw", "ishw72u"];
+  var currentKeyIndex = Math.floor(Math.random() * validKeys.length);
+  return validKeys[currentKeyIndex];
+}
+
+function updateKeyAndTimer(key, remainingTime) {
+  var keyElement = document.getElementById('key');
+  keyElement.textContent = "Your key: " + key;
   var countdownWrapper = document.getElementById('countdownWrapper');
-  showWhitelistingCountdown();
-
-  setTimeout(function() {
-    var ip = "127.0.0.1"; // Example IP, replace with actual IP detection logic
-    if (!isWhitelisted(hwid)) {
-      addToWhitelist(hwid, ip);
-    }
-    startCountdown();
-  }, 5000); // Wait 5 seconds before starting the countdown
-});
-
-function showWhitelistingCountdown() {
-  var timer = 5;
-  var countdown = setInterval(function() {
-    if (timer <= 0) {
-      clearInterval(countdown);
-      startCountdown();
-    } else {
-      countdownWrapper.textContent = "Whitelisting in " + timer + " seconds...";
-      timer--;
-    }
-  }, 1000);
-}
-
-function startCountdown() {
-  var remainingTime = whitelistDuration - (Date.now() - JSON.parse(localStorage.getItem('whitelist_' + hwid)).timestamp);
-  var countdown = setTimeout(function update() {
+  setInterval(function() {
+    var hours = Math.floor(remainingTime / 3600);
+    var minutes = Math.floor((remainingTime % 3600) / 60);
+    var seconds = remainingTime % 60;
+    countdownWrapper.textContent = "Expires in: " + hours + "h " + minutes + "m " + seconds + "s";
+    remainingTime--;
     if (remainingTime <= 0) {
-      countdownWrapper.textContent = "Your whitelist has expired.";
-    } else {
-      var hours = Math.floor(remainingTime / (1000 * 60 * 60));
-      var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-      var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-      countdownWrapper.textContent = "Remaining time: " + hours + " hours, " + minutes + " minutes, " + seconds + " seconds";
-      remainingTime -= 1000;
-      setTimeout(update, 1000); // Update the countdown every second
+      var newKey = rotateKey();
+      localStorage.setItem('key_' + getHWID(), newKey);
+      localStorage.setItem('expiry_' + getHWID(), Date.now() + (24 * 60 * 60 * 1000)); // Set expiry to 24 hours from now
+      updateKeyAndTimer(newKey, 24 * 60 * 60); // Start countdown with new key
+      document.getElementById('copyBtn').style.display = 'inline-block'; // Show copy button
+      document.getElementById('copyBtn').addEventListener('click', function() {
+        var keyText = document.getElementById('key').textContent;
+        navigator.clipboard.writeText(keyText).then(function() {
+          alert('Key copied to clipboard: ' + keyText);
+        }, function(err) {
+          console.error('Could not copy text: ', err);
+        });
+      });
     }
   }, 1000);
 }
+
+function startGeneratingKey() {
+  var hwid = getHWID();
+  var expiryTime = localStorage.getItem('expiry_' + hwid);
+  if (expiryTime && expiryTime > Date.now()) {
+    var remainingTime = Math.floor((expiryTime - Date.now()) / 1000);
+    var key = localStorage.getItem('key_' + hwid);
+    updateKeyAndTimer(key, remainingTime);
+    document.getElementById('copyBtn').style.display = 'inline-block'; // Show copy button
+    document.getElementById('copyBtn').addEventListener('click', function() {
+      var keyText = document.getElementById('key').textContent;
+      navigator.clipboard.writeText(keyText).then(function() {
+        alert('Key copied to clipboard: ' + keyText);
+      }, function(err) {
+        console.error('Could not copy text: ', err);
+      });
+    });
+  } else {
+    var countdown = 5;
+    var countdownWrapper = document.getElementById('countdownWrapper');
+    var interval = setInterval(function() {
+      countdownWrapper.textContent = "Generating key in " + countdown + " seconds...";
+      countdown--;
+      if (countdown < 0) {
+        clearInterval(interval);
+        var key = rotateKey();
+        localStorage.setItem('key_' + hwid, key);
+        localStorage.setItem('expiry_' + hwid, Date.now() + (24 * 60 * 60 * 1000)); // Set expiry to 24 hours from now
+        updateKeyAndTimer(key, 24 * 60 * 60); // Start countdown with new key
+        document.getElementById('copyBtn').style.display = 'inline-block'; // Show copy button
+        document.getElementById('copyBtn').addEventListener('click', function() {
+          var keyText = document.getElementById('key').textContent;
+          navigator.clipboard.writeText(keyText).then(function() {
+            alert('Key copied to clipboard: ' + keyText);
+          }, function(err) {
+            console.error('Could not copy text: ', err);
+          });
+        });
+      }
+    }, 1000);
+  }
+}
+
+startGeneratingKey(); // Start generating key with countdown
 </script>
 </body>
 </html>
