@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Generate Your Key</title>
+<title>Whitelist System</title>
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -27,7 +27,7 @@ h1 {
   color: #ffffff;
 }
 
-#countdown {
+#whitelistStatus {
   font-size: 20px;
   margin-bottom: 20px;
 }
@@ -74,56 +74,28 @@ h1 {
 </head>
 <body>
 <div class="container">
-  <h1>Generate Your Key</h1>
-  <p id="countdown">Generating key in <span id="timer">5</span> seconds...</p>
-  <div id="key"></div>
-  <button id="copyBtn" style="display: none;">Copy Key</button>
-</div>
-
-<div id="blockingOverlay">
-  <div class="blockingMessage">
-    <p>Please complete the system to get key.</p>
-  </div>
+  <h1>Whitelist System</h1>
+  <div id="whitelistStatus"></div>
 </div>
 
 <script>
-function generateKey() {
-  var hwid = getHWID();
-  var storedKey = localStorage.getItem('key_' + hwid);
-  var storedTimestamp = localStorage.getItem('timestamp_' + hwid);
-  var currentTimestamp = Date.now();
-  
-  // Check if a key exists for this HWID and if it was generated within the last 24 hours
-  if (storedKey && storedTimestamp && (currentTimestamp - parseInt(storedTimestamp)) < 24 * 60 * 60 * 1000) {
-    return storedKey; // If yes, return the stored key
-  } else {
-    // Generate a new key
-    var key = '';
-    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    var charactersLength = characters.length;
-    for (var i = 0; i < 10; i++) {
-      key += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    
-    // Store the new key and its timestamp
-    localStorage.setItem('key_' + hwid, key);
-    localStorage.setItem('timestamp_' + hwid, currentTimestamp);
-    
-    return key;
-  }
+var weinzWhitelisted = []; // Initialize an empty whitelist
+var whitelistDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+function isWeinzWhitelisted(hwid) {
+  var storedData = JSON.parse(localStorage.getItem('whitelist_' + hwid));
+  return storedData && (Date.now() - storedData.timestamp) < whitelistDuration;
 }
 
-function startTimer(duration, display) {
-  var timer = duration;
-  var countdown = setInterval(function () {
-    display.textContent = timer;
-    if (--timer < 0) {
-      clearInterval(countdown);
-      var key = generateKey();
-      document.getElementById('key').textContent = key;
-      document.getElementById('copyBtn').style.display = 'inline-block';
-    }
-  }, 1000);
+function addToWhitelist(hwid) {
+  var storedData = JSON.parse(localStorage.getItem('whitelist_' + hwid));
+  var isNewWhitelisted = false;
+  if (!storedData || (Date.now() - storedData.timestamp) >= whitelistDuration) {
+    storedData = { timestamp: Date.now() };
+    localStorage.setItem('whitelist_' + hwid, JSON.stringify(storedData));
+    isNewWhitelisted = true;
+  }
+  return isNewWhitelisted;
 }
 
 function getHWID() {
@@ -132,21 +104,37 @@ function getHWID() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  var blockingOverlay = document.getElementById('blockingOverlay');
-  // Start the timer to generate key
-  var fiveSeconds = 5,
-      display = document.querySelector('#timer');
-  startTimer(fiveSeconds, display);
+  var whitelistStatus = document.getElementById('whitelistStatus');
+  var hwid = getHWID();
 
-  document.getElementById('copyBtn').addEventListener('click', function() {
-    var keyText = document.getElementById('key').textContent;
-    navigator.clipboard.writeText(keyText).then(function() {
-      alert('Key copied to clipboard: ' + keyText);
-    }, function(err) {
-      console.error('Could not copy text: ', err);
-    });
-  });
+  if (isWeinzWhitelisted(hwid)) {
+    updateRemainingTime();
+  } else {
+    setTimeout(function() {
+      if (addToWhitelist(hwid)) {
+        updateRemainingTime();
+      }
+    }, 5000); // Wait 5 seconds before whitelisting
+  }
+
+  // Update remaining time every second
+  setInterval(function() {
+    if (isWeinzWhitelisted(hwid)) {
+      updateRemainingTime();
+    }
+  }, 1000);
 });
+
+function updateRemainingTime() {
+  var hwid = getHWID();
+  var whitelistStatus = document.getElementById('whitelistStatus');
+  var storedData = JSON.parse(localStorage.getItem('whitelist_' + hwid));
+  var remainingTime = whitelistDuration - (Date.now() - storedData.timestamp);
+  var hours = Math.floor(remainingTime / (1000 * 60 * 60));
+  var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+  whitelistStatus.textContent = "You are whitelisted for: " + hours + " hours, " + minutes + " minutes, " + seconds + " seconds";
+}
 </script>
 </body>
 </html>
