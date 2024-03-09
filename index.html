@@ -140,8 +140,10 @@ p {
 }
 
 #key {
-  font-size: 24px;
+  font-size: 18px;
   margin-bottom: 20px;
+  font-family: monospace; /* Use monospace font for key */
+  word-break: break-all; /* Break long keys into multiple lines */
 }
 
 #copyBtn {
@@ -190,7 +192,7 @@ function rotateKey() {
 
 function updateKeyAndTimer(key, remainingTime) {
   var keyElement = document.getElementById('key');
-  keyElement.textContent = "Your key: " + key;
+  keyElement.textContent = key; // Remove the "Your key: " prefix
   var countdownWrapper = document.getElementById('countdownWrapper');
   setInterval(function() {
     var hours = Math.floor(remainingTime / 3600);
@@ -205,7 +207,7 @@ function updateKeyAndTimer(key, remainingTime) {
       updateKeyAndTimer(newKey, 24 * 60 * 60); // Start countdown with new key
       document.getElementById('copyBtn').style.display = 'inline-block'; // Show copy button
       document.getElementById('copyBtn').addEventListener('click', function() {
-        var keyText = document.getElementById('key').textContent;
+        var keyText = keyElement.textContent; // Get only the key
         navigator.clipboard.writeText(keyText).then(function() {
           alert('Key copied to clipboard: ' + keyText);
         }, function(err) {
@@ -225,7 +227,7 @@ function startGeneratingKey() {
     updateKeyAndTimer(key, remainingTime);
     document.getElementById('copyBtn').style.display = 'inline-block'; // Show copy button
     document.getElementById('copyBtn').addEventListener('click', function() {
-      var keyText = document.getElementById('key').textContent;
+      var keyText = document.getElementById('key').textContent; // Get only the key
       navigator.clipboard.writeText(keyText).then(function() {
         alert('Key copied to clipboard: ' + keyText);
       }, function(err) {
@@ -246,7 +248,7 @@ function startGeneratingKey() {
         updateKeyAndTimer(key, 24 * 60 * 60); // Start countdown with new key
         document.getElementById('copyBtn').style.display = 'inline-block'; // Show copy button
         document.getElementById('copyBtn').addEventListener('click', function() {
-          var keyText = document.getElementById('key').textContent;
+          var keyText = document.getElementById('key').textContent; // Get only the key
           navigator.clipboard.writeText(keyText).then(function() {
             alert('Key copied to clipboard: ' + keyText);
           }, function(err) {
