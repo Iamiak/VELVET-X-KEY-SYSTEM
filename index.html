@@ -4,16 +4,121 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Key Generator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"> <!-- Google Fonts Roboto -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"> <!-- Google Fonts Poppins -->
 <style>
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Roboto', sans-serif;
   text-align: center;
-  background-color: #000000;
+  background-color: #171717;
   margin: 0;
   padding: 0;
   color: #ffffff;
 }
 
+.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-screen {
+  background-color: #000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-animation {
+  width: 120px; /* Increased width */
+  height: 120px; /* Increased height */
+}
+
+.fadeInText {
+  animation: fadeInText 1s ease 1s forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInText {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+h1 {
+  margin-bottom: 10px;
+  font-size: 36px;
+  font-family: 'Poppins', sans-serif;
+  color: #ff7878;
+  text-align: center;
+}
+
+p {
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-family: 'Roboto', sans-serif;
+  color: #ffffff;
+  text-align: center;
+}
+
+.subscribeBtn {
+  background-color: #e74c3c;
+  color: white;
+  padding: 15px 30px;
+  border-radius: 20px;
+  margin: 10px;
+  font-size: 20px;
+  transition: all 0.3s ease;
+}
+
+.subscribeBtn:hover {
+  transform: scale(1.05);
+}
+
+.lootlinkBtn, .linkversiteBtn {
+  font-family: 'Poppins', sans-serif;
+  background-color: transparent;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 20px;
+  margin: 10px;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.lootlinkBtn:hover, .linkversiteBtn:hover {
+  transform: scale(1.05);
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #999;
+  text-align: center;
+}
+
+.lootlinkBtn h2, .linkversiteBtn h2 {
+  font-size: 24px;
+  font-family: 'Poppins', sans-serif;
+  color: #ff7878;
+}
+
+/* Key Generator Styles */
 .container {
   max-width: 600px;
   margin: 100px auto;
@@ -21,10 +126,6 @@ body {
   padding: 20px;
   border-radius: 20px;
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-}
-
-h1 {
-  color: #ffffff;
 }
 
 #keyStatus {
@@ -35,6 +136,7 @@ h1 {
 #countdownWrapper {
   font-size: 20px;
   margin-bottom: 20px;
+  text-align: center; /* Center the countdown text */
 }
 
 #key {
@@ -57,9 +159,10 @@ h1 {
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>Key Generator</h1>
-  <div id="keyStatus">
+
+<div class="fullscreen">
+  <div class="container" id="keyStatus">
+    <h1 class="fadeInText">Key Generator</h1>
     <div id="countdownWrapper"></div>
     <div id="key"></div>
     <button id="copyBtn" style="display: none;">Copy Key</button>
@@ -73,9 +176,16 @@ function getHWID() {
 }
 
 function rotateKey() {
-  var validKeys = ["JTt3i77", "8y3hq7sy3y", "Uet3g6s6", "jsu2uhw", "ishw72u"];
-  var currentKeyIndex = Math.floor(Math.random() * validKeys.length);
-  return validKeys[currentKeyIndex];
+  var additionalKeys = ["cJuHuvh1u6yy2y1hw7yw62", "Kiau7H5t1yau6Y6H7auywy", "iwhuabGYWGQUVYGyya7i", "2iua8ahwu2y1u2u83u382u"];
+  var randomKey = "";
+  for (var i = 0; i < 12; i++) { // Generating a random key with 12 characters
+    var randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // Random uppercase letter
+    randomKey += randomChar;
+  }
+  var additionalKeyIndex = Math.floor(Math.random() * additionalKeys.length); // Random index for additional keys
+  var position = Math.floor(Math.random() * (randomKey.length - additionalKeys[additionalKeyIndex].length)); // Random position to insert additional key
+  var mergedKey = randomKey.slice(0, position) + additionalKeys[additionalKeyIndex] + randomKey.slice(position); // Insert additional key at random position
+  return mergedKey;
 }
 
 function updateKeyAndTimer(key, remainingTime) {
@@ -148,7 +258,24 @@ function startGeneratingKey() {
   }
 }
 
-startGeneratingKey(); // Start generating key with countdown
+// Start countdown for 5 seconds before generating key
+var countdownTime = 5;
+var countdownInterval = setInterval(function() {
+  document.getElementById('countdownWrapper').textContent = "Generating key in " + countdownTime + " seconds...";
+  countdownTime--;
+  if (countdownTime < 0) {
+    clearInterval(countdownInterval);
+    startGeneratingKey(); // Start generating key after countdown
+  }
+}, 1000);
 </script>
+
+<script>
+function getHWID() {
+  // For demonstration purposes, generating a fixed HWID
+  return 'myHWID';
+}
+</script>
+
 </body>
 </html>
